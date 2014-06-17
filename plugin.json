@@ -1,0 +1,11 @@
+{
+	"id": "nodebb-plugin-import-smf",
+	"name": "nodebb-plugin-import-smf",
+	"description": "An SMF to NodeBB data exporter",
+	"url": "https://github.com/psychobunny/nodebb-plugin-import-smf",
+	"library": "./lib/index.js",
+	"hooks": [
+		{ "hook": "filter:admin.header.build", "method": "admin.menu", "callbacked": false },
+		{ "hook": "filter:admin.create_routes", "method": "admin.route", "callbacked": true }
+	]
+}

@@ -1,0 +1,12 @@
+{
+	"log": "debug",
+	"storageDir": "../storage",
+	"clearStorage": false,
+	"db": {
+		"host": "",
+		"user": "",
+		"password": "",
+		"database": ""
+	},
+	"tablePrefix": "smf_"
+}
