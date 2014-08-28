@@ -50,16 +50,15 @@ read carefully:
     * `_username` YES. SMF for some reason allows duplicate users with same emails? so the first ones by ID orders will be saved, the rest will be skipped. (SMF appends [username]_dup[Number] next to the dups.. so those will be skipped too if the email is already used)
     * `_alternativeUsername` YES. as the __SMF.User.UserDisplayName__, which [nodebb-plugin-import](https://github.com/akhoury/nodebb-plugin-import) will try to use if the username validation fails
     * `_password` NO. SMF uses MD5, NodeBB uses base64 I think, so can't do, but if you use [nodebb-plugin-import](https://github.com/akhoury/nodebb-plugin-import) it will generate random passwords and hand them to you so can email them.
-    * `_level` (administrator and moderator) YES. Admins will stay Admins, and Moderators will stay Moderators, the catch here though is that each moderator is a moderator on ALL of the categories, since I didn't find anywhere SMF separating these powers. Hopefully soon you will be able to edit the Moderators easily via the NodeBB/admin.
+    * `_level` (administrator and moderator) NO.
     * `_joindate` YES, SMF uses Seconds, the exported will convert to Milliseconds
-    * `_website` YES. if URL looks valid, it is exported, but it's not checked if 404s
-    * `_picture` YES. if URL looks valid, it is exported, but it's not checked if 404s, if not valid, it's set to "" and NodeBB will generate a gravatar URl for the user
-    * `_reputation` SORT-OF. assumed as the __SMF.User.raking__
-    * `_profileviews` SORT-OF. assumed as the __SMF.User.totalRanks__ I didn't find anything closer
-    * `_location` YES. migrated as is, clear text
-    * `_signature` YES. migrated as is (HTML -- read the [Markdown note](#markdown-note) below)
+    * `_website` NO.
+    * `_picture` NO.
+    * `_reputation` NO.
+    * `_profileviews` NO.
+    * `_location` NO.
+    * `_signature` NO.
     * `_banned` YES. it will stay banned, by username
-    * __Oh and__ SMF have a weird User with ID == 1, ******DONOTDELETE****** <= that's like the first user created, and somehow, in my SMF installation, it does own few topics and posts, this one will not be migrated, BUT [nodebb-plugin-import](https://github.com/akhoury/nodebb-plugin-import) will assigned these post to the to the NodeBB initial Admin created.
 
 
 - ####Categories (AKA Forums per SMF Speak):
@@ -73,6 +72,8 @@ read carefully:
     * `_content` __(or the 'parent-post` content of this topic)__ YES (HTML - read the [Markdown Note](#markdown-note) below)
     * `_timestamp` YES, SMF uses Seconds, the exporter will convert to Milliseconds
     * `_pinned` YES (0 or 1) (I don't know how many you can pin in NodeBB)
+    * `_approved` YES (0 or 1)
+    * `_locked` YES (0 or 1)
     * `_viewcount` YES
 
 - ####Posts:
