@@ -1,9 +1,9 @@
 {
 	"id": "nodebb-plugin-import-smf",
 	"name": "nodebb-plugin-import-smf",
-	"description": "An SMF to NodeBB data exporter",
+	"description": "Export your SMF 2.0 forum into NodeBB",
 	"url": "https://github.com/a5mith/nodebb-plugin-import-smf",
-	"library": "./lib/index.js",
+	"library": "./admin/index.js",
 	"hooks": [
 		{ "hook": "filter:admin.header.build", "method": "admin.menu", "callbacked": false },
 		{ "hook": "filter:admin.create_routes", "method": "admin.route", "callbacked": true }

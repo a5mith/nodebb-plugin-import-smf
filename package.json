@@ -1,39 +1,37 @@
+
 {
-  "name": "nodebb-plugin-import-smf",
-  "version": "0.0.1",
-  "description": "An SMF to NodeBB data exporter",
-  "main": "./lib/export.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1"
-  },
-  "repository": {
-    "type": "git",
-    "url": "https://github.com/a5mith/nodebb-plugin-import-smf"
-  },
-  "keywords": [
-    "smf",
-    "plugin",
-    "migrate",
-    "convert",
-    "export",
-    "import"
-  ],
-  "author": {
-    "name": "a5mith",
-    "email": "a_5mith@35hz.co.uk"
-  },
-  "license": "MIT",
-  "bugs": {
-    "url": "https://github.com/a5mith/nodebb-plugin-import-smf/issues"
-  },
-  "dependencies": {
-    "underscore": "~1.5.2",
-    "fs-extra": "~0.8.1",
-    "async": "~0.2.9",
-    "optimist": "~0.6.0",
-    "marked": "~0.1.6",
-    "mysql": "~2.0.x",
-    "tiny-logger": "~0.0.x",
-    "node-persist": "git://github.com/akhoury/node-persist.git#master"
-  }
+    "name": "nodebb-plugin-import-smf",
+    "version": "0.1.0",
+    "description": "An SMF to NodeBB data exporter",
+    "main": "./index.js",
+    "scripts": {
+        "test": "echo \"Error: no test specified\" && exit 1"
+    },
+    "repository": {
+        "type": "git",
+        "url": "https://github.com/a5mith/nodebb-plugin-import-smf"
+    },
+    "keywords": [
+        "smf",
+        "plugin",
+        "migrate",
+        "convert",
+        "export",
+        "import"
+    ],
+    "author": {
+        "name": "a5mith",
+        "email": "a_5mith@35hz.co.uk"
+    },
+    "license": "MIT",
+    "bugs": {
+        "url": "https://github.com/a5mith/nodebb-plugin-import-smf/issues"
+    },
+    "dependencies": {
+        "underscore": "~1.6.0",
+        "fs-extra": "~0.11.0",
+        "async": "~0.9.0",
+        "marked": "~0.3.2",
+        "mysql": "~2.4.2"
+    }
 }
