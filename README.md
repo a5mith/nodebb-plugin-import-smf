@@ -49,7 +49,7 @@ read carefully:
 - ####Users:
     * `_username` YES. SMF for some reason allows duplicate users with same emails? so the first ones by ID orders will be saved, the rest will be skipped. (SMF appends [username]_dup[Number] next to the dups.. so those will be skipped too if the email is already used)
     * `_alternativeUsername` YES. as the __SMF.User.UserDisplayName__, which [nodebb-plugin-import](https://github.com/akhoury/nodebb-plugin-import) will try to use if the username validation fails
-    * `_password` NO. SMF uses MD5, NodeBB uses base64 I think, so can't do, but if you use [nodebb-plugin-import](https://github.com/akhoury/nodebb-plugin-import) it will generate random passwords and hand them to you so can email them.
+    * `_password` NO. SMF uses SHA-1, NodeBB uses bcrypt, so can't do, but if you use [nodebb-plugin-import](https://github.com/akhoury/nodebb-plugin-import) it will generate random passwords and hand them to you so can email them.
     * `_level` (administrator and moderator) NO.
     * `_joindate` YES, SMF uses Seconds, the exported will convert to Milliseconds
     * `_website` NO.
