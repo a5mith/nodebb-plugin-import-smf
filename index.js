@@ -211,13 +211,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 
                 //normalize here
                 var map = {};
-                var msg = 'You must run getUsers() and getCategories() before you can getTopics()';
-
-                if (!Exporter._users) {
-                    err = {error: 'Users are not in memory. ' + msg};
-                    Exporter.error(err.error);
-                    return callback(err);
-                }
+                var msg = 'You must run getCategories() before you can getTopics()';
 
                 if (!Exporter._categories) {
                     err = {error: 'Categories are not in memory. ' + msg};
@@ -293,13 +287,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 
                 //normalize here
                 var map = {};
-                var msg = 'You must run getUsers() and getTopics() before you can getPosts()';
-
-                if (!Exporter._users) {
-                    err = {error: 'Users are not in memory. ' + msg};
-                    Exporter.error(err.error);
-                    return callback(err);
-                }
+                var msg = 'You must run getTopics() before you can getPosts()';
 
                 if (!Exporter._topics) {
                     err = {error: 'Topics are not in memory. ' + msg};
