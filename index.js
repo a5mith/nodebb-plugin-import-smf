@@ -36,7 +36,6 @@ var logPrefix = '[nodebb-plugin-import-smf]';
     };
 
     Exporter.getPaginatedUsers = function(start, limit, callback) {
-        Exporter.log('getUsers');
         callback = !_.isFunction(callback) ? noop : callback;
 
         var err;
@@ -118,7 +117,6 @@ var logPrefix = '[nodebb-plugin-import-smf]';
     };
 
     Exporter.getPaginatedCategories = function(start, limit, callback) {
-        Exporter.log('getCategories');
         callback = !_.isFunction(callback) ? noop : callback;
 
         var err;
@@ -166,7 +164,6 @@ var logPrefix = '[nodebb-plugin-import-smf]';
     };
 
     Exporter.getPaginatedTopics = function(start, limit, callback) {
-        Exporter.log('getTopics');
         callback = !_.isFunction(callback) ? noop : callback;
 
         var err;
@@ -236,7 +233,6 @@ var logPrefix = '[nodebb-plugin-import-smf]';
     };
 
     Exporter.getPaginatedPosts = function(start, limit, callback) {
-        Exporter.log('getPosts');
         callback = !_.isFunction(callback) ? noop : callback;
 
         var err;
