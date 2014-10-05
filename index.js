@@ -32,6 +32,10 @@ var logPrefix = '[nodebb-plugin-import-smf]';
     };
 
     Exporter.getUsers = function(callback) {
+        Exporter.getPaginatedUsers(0, -1, callback);
+    };
+
+    Exporter.getPaginatedUsers = function(start, end, callback) {
         Exporter.log('getUsers');
         callback = !_.isFunction(callback) ? noop : callback;
 
@@ -58,7 +62,8 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             //+ prefix + 'USER_PROFILE.USER_BIRTHDAY as _birthday '
 
             + 'FROM ' + prefix + 'members '
-            + 'WHERE ' + prefix + 'members.id_member = ' + prefix + 'members.id_member ';
+            + 'WHERE ' + prefix + 'members.id_member = ' + prefix + 'members.id_member '
+            + (start >= 0 && end > 0) ? 'LIMIT ' + start + ',' + end : '';
 
         if (!Exporter.connection) {
             err = {error: 'MySQL connection is not setup. Run setup(config) first'};
@@ -103,14 +108,15 @@ var logPrefix = '[nodebb-plugin-import-smf]';
                     }
                 });
 
-                // keep a copy of the users in memory here
-                Exporter._users = map;
-
                 callback(null, map);
             });
     };
 
     Exporter.getCategories = function(callback) {
+        return Exporter.getPaginatedCategories(0, -1, callback);
+    };
+
+    Exporter.getPaginatedCategories = function(start, end, callback) {
         Exporter.log('getCategories');
         callback = !_.isFunction(callback) ? noop : callback;
 
@@ -121,7 +127,8 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             + prefix + 'boards.id_board as _cid, '
             + prefix + 'boards.name as _name, '
             + prefix + 'boards.description as _description '
-            + 'FROM ' + prefix + 'boards ';
+            + 'FROM ' + prefix + 'boards '
+            + (start >= 0 && end > 0) ? 'LIMIT ' + start + ',' + end : '';
 
         if (!Exporter.connection) {
             err = {error: 'MySQL connection is not setup. Run setup(config) first'};
@@ -149,14 +156,15 @@ var logPrefix = '[nodebb-plugin-import-smf]';
                     }
                 });
 
-                // keep a copy in memory
-                Exporter._categories = map;
-
                 callback(null, map);
             });
     };
 
     Exporter.getTopics = function(callback) {
+        return Exporter.getPaginatedTopics(0, -1, callback);
+    };
+
+    Exporter.getPaginatedTopics = function(start, end, callback) {
         Exporter.log('getTopics');
         callback = !_.isFunction(callback) ? noop : callback;
 
@@ -193,8 +201,9 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             + prefix + 'messages.body as _content '
 
             + 'FROM ' + prefix + 'topics, ' + prefix + 'messages '
-            // see
-            + 'WHERE ' + prefix + 'topics.id_first_msg=' + prefix + 'messages.id_msg ';
+            + 'WHERE ' + prefix + 'topics.id_first_msg=' + prefix + 'messages.id_msg '
+
+            + (start >= 0 && end > 0) ? 'LIMIT ' + start + ',' + end : '';
 
         if (!Exporter.connection) {
             err = {error: 'MySQL connection is not setup. Run setup(config) first'};
@@ -211,38 +220,21 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 
                 //normalize here
                 var map = {};
-                var msg = 'You must run getCategories() before you can getTopics()';
-
-                if (!Exporter._categories) {
-                    err = {error: 'Categories are not in memory. ' + msg};
-                    Exporter.error(err.error);
-                    return callback(err);
-                }
-
                 rows.forEach(function(row) {
-                    if (Exporter._categories[row._cid]) {
-
-                        row._title = row._title ? row._title[0].toUpperCase() + row._title.substr(1) : 'Untitled';
-                        row._timestamp = ((row._timestamp || 0) * 1000) || startms;
-
-                        map[row._tid] = row;
-                    } else {
-                        var requiredValues = [Exporter._categories[row._cid]];
-                        var requiredKeys = ['category'];
-                        var falsyIndex = Exporter.whichIsFalsy(requiredValues);
-
-                        Exporter.warn('Skipping topic._tid: ' + row._tid + ' because ' + requiredKeys[falsyIndex] + ' is falsy. Value: ' + requiredValues[falsyIndex]);
-                    }
+                    row._title = row._title ? row._title[0].toUpperCase() + row._title.substr(1) : 'Untitled';
+                    row._timestamp = ((row._timestamp || 0) * 1000) || startms;
+                    map[row._tid] = row;
                 });
-
-                // keep a copy in memory
-                Exporter._topics = map;
 
                 callback(null, map);
             });
     };
 
     Exporter.getPosts = function(callback) {
+        return Exporter.getPaginatedPosts(0, -1, callback)
+    };
+
+    Exporter.getPaginatedPosts = function(start, end, callback) {
         Exporter.log('getPosts');
         callback = !_.isFunction(callback) ? noop : callback;
 
@@ -260,17 +252,15 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             + prefix + 'messages.body as _content, '
             + prefix + 'messages.id_member as _uid, '
 
-            // I couldnt tell what's the different, they're all HTML to me
-            //+ prefix + 'POST_MARKUP_TYPE as _markup, '
             // maybe use this one to skip
             + prefix + 'messages.approved as _approved '
 
             + 'FROM ' + prefix + 'messages '
             // this post cannot be a its topic's main post, it MUST be a reply-post
             // see https://github.com/akhoury/nodebb-plugin-import#important-note-on-topics-and-posts
+            + 'WHERE ' + prefix + 'messages.id_topic > 0 AND ' + prefix + 'messages.id_msg NOT IN (SELECT id_first_msg FROM ' + prefix + 'topics) '
 
-            // phpBB doesn't have post parent ID (phpBB migrator checks if 0)
-            + 'WHERE ' + prefix + 'messages.id_topic > 0 AND ' + prefix + 'messages.id_msg NOT IN (SELECT id_first_msg FROM ' + prefix + 'topics) ' ;
+            + (start >= 0 && end > 0) ? 'LIMIT ' + start + ',' + end : '';
 
         if (!Exporter.connection) {
             err = {error: 'MySQL connection is not setup. Run setup(config) first'};
@@ -284,30 +274,12 @@ var logPrefix = '[nodebb-plugin-import-smf]';
                     Exporter.error(err);
                     return callback(err);
                 }
-
                 //normalize here
                 var map = {};
-                var msg = 'You must run getTopics() before you can getPosts()';
-
-                if (!Exporter._topics) {
-                    err = {error: 'Topics are not in memory. ' + msg};
-                    Exporter.error(err.error);
-                    return callback(err);
-                }
-
                 rows.forEach(function(row) {
-                    if (Exporter._topics[row._tid] && row._content) {
                         row._timestamp = ((row._timestamp || 0) * 1000) || startms;
                         map[row._pid] = row;
-                    } else {
-                        var requiredValues = [Exporter._topics[row._tid], row._content];
-                        var requiredKeys = ['topic', 'content'];
-                        var falsyIndex = Exporter.whichIsFalsy(requiredValues);
-
-                        Exporter.warn('Skipping post._pid: ' + row._pid + ' because ' + requiredKeys[falsyIndex] + ' is falsy. Value: ' + requiredValues[falsyIndex]);
-                    }
                 });
-
                 callback(null, map);
             });
     };
