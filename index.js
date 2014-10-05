@@ -63,7 +63,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 
             + 'FROM ' + prefix + 'members '
             + 'WHERE ' + prefix + 'members.id_member = ' + prefix + 'members.id_member '
-            + (start >= 0 && end > 0) ? 'LIMIT ' + start + ',' + end : '';
+            + (start >= 0 && end > 0 ? 'LIMIT ' + start + ',' + end : '');
 
         if (!Exporter.connection) {
             err = {error: 'MySQL connection is not setup. Run setup(config) first'};
@@ -128,7 +128,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             + prefix + 'boards.name as _name, '
             + prefix + 'boards.description as _description '
             + 'FROM ' + prefix + 'boards '
-            + (start >= 0 && end > 0) ? 'LIMIT ' + start + ',' + end : '';
+            + (start >= 0 && end > 0 ? 'LIMIT ' + start + ',' + end : '');
 
         if (!Exporter.connection) {
             err = {error: 'MySQL connection is not setup. Run setup(config) first'};
@@ -172,7 +172,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
         var prefix = Exporter.config('prefix');
         var startms = +new Date();
         var query =
-            'SELECT '
+                'SELECT '
             + prefix + 'messages.id_topic as _tid, '
             + prefix + 'messages.id_board as _cid, '
 
@@ -203,7 +203,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             + 'FROM ' + prefix + 'topics, ' + prefix + 'messages '
             + 'WHERE ' + prefix + 'topics.id_first_msg=' + prefix + 'messages.id_msg '
 
-            + (start >= 0 && end > 0) ? 'LIMIT ' + start + ',' + end : '';
+            + (start >= 0 && end > 0 ? 'LIMIT ' + start + ',' + end : '');
 
         if (!Exporter.connection) {
             err = {error: 'MySQL connection is not setup. Run setup(config) first'};
@@ -242,7 +242,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
         var prefix = Exporter.config('prefix');
         var startms = +new Date();
         var query =
-            'SELECT ' + prefix + 'messages.id_msg as _pid, '
+                'SELECT ' + prefix + 'messages.id_msg as _pid, '
             //+ 'POST_PARENT_ID as _post_replying_to, ' phpbb doesn't have "reply to another post"
             + prefix + 'messages.id_topic as _tid, '
             + prefix + 'messages.poster_time as _timestamp, '
@@ -260,7 +260,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             // see https://github.com/akhoury/nodebb-plugin-import#important-note-on-topics-and-posts
             + 'WHERE ' + prefix + 'messages.id_topic > 0 AND ' + prefix + 'messages.id_msg NOT IN (SELECT id_first_msg FROM ' + prefix + 'topics) '
 
-            + (start >= 0 && end > 0) ? 'LIMIT ' + start + ',' + end : '';
+            + (start >= 0 && end > 0 ? 'LIMIT ' + start + ',' + end : '');
 
         if (!Exporter.connection) {
             err = {error: 'MySQL connection is not setup. Run setup(config) first'};
@@ -277,8 +277,8 @@ var logPrefix = '[nodebb-plugin-import-smf]';
                 //normalize here
                 var map = {};
                 rows.forEach(function(row) {
-                        row._timestamp = ((row._timestamp || 0) * 1000) || startms;
-                        map[row._pid] = row;
+                    row._timestamp = ((row._timestamp || 0) * 1000) || startms;
+                    map[row._pid] = row;
                 });
                 callback(null, map);
             });
@@ -315,6 +315,29 @@ var logPrefix = '[nodebb-plugin-import-smf]';
         ], callback);
     };
 
+    Exporter.paginatedTestrun = function(config, callback) {
+        async.series([
+            function(next) {
+                Exporter.setup(config, next);
+            },
+            function(next) {
+                Exporter.getPaginatedUsers(0, 1000, next);
+            },
+            function(next) {
+                Exporter.getPaginatedCategories(0, 1000, next);
+            },
+            function(next) {
+                Exporter.getPaginatedTopics(0, 1000, next);
+            },
+            function(next) {
+                Exporter.getPaginatedPosts(1001, 2000, next);
+            },
+            function(next) {
+                Exporter.teardown(next);
+            }
+        ], callback);
+    };
+
     Exporter.warn = function() {
         var args = _.toArray(arguments);
         args.unshift(logPrefix);
@@ -326,7 +349,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
         args.unshift(logPrefix);
         console.log.apply(console, args);
     };
-    
+
     Exporter.error = function() {
         var args = _.toArray(arguments);
         args.unshift(logPrefix);
