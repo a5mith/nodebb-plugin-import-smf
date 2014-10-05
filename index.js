@@ -71,7 +71,6 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             return callback(err);
         }
 
-        console.log(query);
 
         Exporter.connection.query(query,
             function(err, rows) {
