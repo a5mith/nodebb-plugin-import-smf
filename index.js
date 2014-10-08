@@ -17,7 +17,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             user: config.dbuser || config.user || 'root',
             password: config.dbpass || config.pass || config.password || '',
             port: config.dbport || config.port || 3306,
-            database: config.dbname || config.name || config.database || 'smf'
+            database: config.dbname || config.name || config.database || 'smf',
             prefix: config.prefix || config.tablePrefix || ''
 	};
         Exporter.log(_config);
