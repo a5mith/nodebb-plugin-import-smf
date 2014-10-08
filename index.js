@@ -18,13 +18,10 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             password: config.dbpass || config.pass || config.password || '',
             port: config.dbport || config.port || 3306,
             database: config.dbname || config.name || config.database || 'smf'
-        };
-
+            prefix: config.prefix || config.tablePrefix || ''
+	};
         Exporter.log(_config);
-
         Exporter.config(_config);
-        Exporter.config('prefix', config.prefix || config.tablePrefix || 'smf_');
-
         Exporter.connection = mysql.createConnection(_config);
         Exporter.connection.connect();
 
