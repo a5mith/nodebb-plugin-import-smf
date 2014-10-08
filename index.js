@@ -228,10 +228,24 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             });
     };
 
+	var getTopicsMainPids = function(callback) {
+		if (Exporter._topicsMainPids) {
+			return callback(null, Exporter._topicsMainPids);
+		}
+		Exporter.getPaginatedTopics(0, -1, function(err, topicsMap) {
+			if (err) return callback(err);
+
+			Exporter._topicsMainPids = {};
+			Object.keys(topicsMap).forEach(function(_tid) {
+				var topic = topicsMap[_tid];
+				Exporter._topicsMainPids[topic.topic_first_post_id] = topic._tid;
+			});
+			callback(null, Exporter._topicsMainPids);
+		});
+	};
     Exporter.getPosts = function(callback) {
         return Exporter.getPaginatedPosts(0, -1, callback)
     };
-
     Exporter.getPaginatedPosts = function(start, limit, callback) {
         callback = !_.isFunction(callback) ? noop : callback;
 
@@ -253,9 +267,8 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             + prefix + 'messages.approved as _approved '
 
             + 'FROM ' + prefix + 'messages '
-            // this post cannot be a its topic's main post, it MUST be a reply-post
-            // see https://github.com/akhoury/nodebb-plugin-import#important-note-on-topics-and-posts
-            + 'WHERE ' + prefix + 'messages.id_topic > 0 AND ' + prefix + 'messages.id_msg NOT IN (SELECT id_first_msg FROM ' + prefix + 'topics) '
+
+            + 'WHERE ' + prefix + 'messages.id_topic > 0 '
 
             + (start >= 0 && limit >= 0 ? 'LIMIT ' + start + ',' + limit : '');
 
@@ -271,13 +284,20 @@ var logPrefix = '[nodebb-plugin-import-smf]';
                     Exporter.error(err);
                     return callback(err);
                 }
-                //normalize here
-                var map = {};
-                rows.forEach(function(row) {
-                    row._timestamp = ((row._timestamp || 0) * 1000) || startms;
-                    map[row._pid] = row;
-                });
-                callback(null, map);
+				getTopicsMainPids(function(err, mpids) {
+					//normalize here
+					var map = {};
+					rows.forEach(function (row) {
+						// make it's not a topic
+						if (! mpids[row._pid]) {
+							row._content = row._content || '';
+							row._timestamp = ((row._timestamp || 0) * 1000) || startms;
+							map[row._pid] = row;
+						}
+					});
+
+					callback(null, map);
+				});
             });
     };
 
