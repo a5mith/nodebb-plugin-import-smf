@@ -20,7 +20,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
             database: config.dbname || config.name || config.database || 'smf',
             prefix: config.prefix || config.tablePrefix || ''
 	};
-        Exporter.log(_config);
+
         Exporter.config(_config);
         Exporter.connection = mysql.createConnection(_config);
         Exporter.connection.connect();
