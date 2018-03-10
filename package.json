@@ -1,6 +1,6 @@
 {
     "name": "nodebb-plugin-import-smf",
-    "version": "0.2.0",
+    "version": "0.2.1",
     "description": "An SMF to NodeBB data exporter",
     "main": "./index.js",
     "scripts": {
@@ -21,12 +21,12 @@
     ],
     "contributors": [
         {
-            "name" : "a5mith",
-            "email" : "a_5mith@35hz.co.uk"
+            "name": "a5mith",
+            "email": "a_5mith@35hz.co.uk"
         },
         {
-            "name" : "akhoury",
-            "email" : "bentael@gmail.com"
+            "name": "akhoury",
+            "email": "bentael@gmail.com"
         }
     ],
     "license": "MIT",

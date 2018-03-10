@@ -52,7 +52,7 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 	};
 
 	Exporter.getGroups = function(callback) {
-		return Exporter.getPaginatedPosts(0, -1, callback)
+		return Exporter.getPaginatedGroups(0, -1, callback)
 	};
 
 	Exporter.getPaginatedGroups = function(start, limit, callback) {
@@ -138,14 +138,14 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 				//normalize here
 				var map = {};
 				rows.forEach(function(row) {
-					if (/Moderator/.test(row._level)) {
+					if (/moderator/i.test(row._level)) {
 						row._level = 'moderator';
-					} else {
+					} else if (! /administrator/i.test(row._level)) {
 						delete row._level;
 					}
 					row._groups = csvToArray(row._groups)
-						.filter(function (_gid) {
-							return _gid && parseInt(_gid, 10) > 0;
+						.filter(function (_gid, i, arr) {
+							return _gid && parseInt(_gid, 10) > 0 && arr.indexOf(_gid) === i;
 						});
 					map[row._uid] = row;
 				});
@@ -195,8 +195,48 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 					row._description = row._description || 'No decsciption available';
 					map[row._cid] = row;
 				});
-				// keep a copy in memory
-				Exporter._categories = map;
+
+				callback(null, map);
+			});
+	};
+
+
+	Exporter.getMessages = function(callback) {
+		return Exporter.getPaginatedMessages(0, -1, callback);
+	};
+
+	Exporter.getPaginatedMessages = function(start, limit, callback) {
+		Exporter.log('getPaginatedMessages');
+		callback = !_.isFunction(callback) ? noop : callback;
+
+		var err;
+		var prefix = Exporter.config('prefix');
+		var query = 'SELECT '
+			+ '\n' +  prefix + 'personal_messages.id_pm as _mid, '
+			+ '\n' +  prefix + 'personal_messages.id_member_from as _fromuid, '
+			+ '\n' +  prefix + 'pm_recipients.id_member as _touid, '
+			+ '\n' +  prefix + 'personal_messages.body as _content, '
+			+ '\n (' +  prefix + 'personal_messages.msgtime * 1000) as _timestamp '
+			+ '\n' +  'FROM ' + prefix + 'personal_messages '
+			+ '\n' + 'JOIN ' + prefix + 'pm_recipients ON ' + prefix + 'pm_recipients.id_pm = ' + prefix + 'personal_messages.id_pm '
+			+ '\n' + (start >= 0 && limit >= 0 ? ' LIMIT ' + start + ',' + limit : '');
+
+		if (!Exporter.connection) {
+			err = {error: 'MySQL connection is not setup. Run setup(config) first'};
+			Exporter.error(err.error);
+			return callback(err);
+		}
+
+		Exporter.connection.query(query,
+			function(err, rows) {
+				if (err) {
+					Exporter.error(err);
+					return callback(err);
+				}
+				var map = {};
+				rows.forEach(function(row) {
+					map[row._mid] = row;
+				});
 
 				callback(null, map);
 			});
@@ -385,6 +425,9 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 				Exporter.getUsers(next);
 			},
 			function(next) {
+				Exporter.getMessages(next);
+			},
+			function(next) {
 				Exporter.getCategories(next);
 			},
 			function(next) {
@@ -409,6 +452,9 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 			},
 			function(next) {
 				Exporter.getPaginatedUsers(0, 1000, next);
+			},
+			function(next) {
+				Exporter.getPaginatedMessages(0, 1000, next);
 			},
 			function(next) {
 				Exporter.getPaginatedCategories(0, 1000, next);
