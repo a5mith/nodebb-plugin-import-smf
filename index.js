@@ -364,7 +364,6 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 			+ '\n (' +  prefix + 'messages.poster_time * 1000) as _timestamp, '
 			+ '\n (' +  prefix + 'messages.modified_time * 1000) as _edited, '
 			+ '\n' +  prefix + 'messages.poster_ip as _ip, '
-			+ '\n' +  prefix + 'messages.poster_email as _uemail, '
 			+ '\n' +  prefix + 'messages.poster_name as _guest, '
 			+ '\n' +  prefix + 'messages.approved as _approved '
 			+ '\n FROM ' + prefix + 'messages '

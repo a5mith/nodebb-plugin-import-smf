@@ -1,6 +1,6 @@
 {
     "name": "nodebb-plugin-import-smf",
-    "version": "0.2.2",
+    "version": "0.2.3",
     "description": "An SMF to NodeBB data exporter",
     "main": "./index.js",
     "scripts": {
