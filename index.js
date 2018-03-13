@@ -3,8 +3,15 @@ var async = require('async');
 var extend = require('extend');
 var mysql = require('mysql');
 var _ = require('underscore');
+var fs = require('fs-extra');
+var path = require('path');
+var sanitize = require("sanitize-filename");
 var noop = function(){};
 var logPrefix = '[nodebb-plugin-import-smf]';
+
+var MIGRATED_FOLDER = 'migrated';
+var ATTACHMENTS_ORIGINALS_DIR = path.join(__dirname, '/tmp/attachments/originals');
+var ATTACHMENTS_MIGRATED_DIR = path.join(__dirname, '/tmp/attachments/' + MIGRATED_FOLDER);
 
 (function(Exporter) {
 
@@ -47,6 +54,9 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 		setInterval(function() {
 			Exporter.connection.query("SELECT 1", function(){});
 		}, 60000);
+
+		fs.ensureDirSync(ATTACHMENTS_ORIGINALS_DIR);
+		fs.ensureDirSync(ATTACHMENTS_MIGRATED_DIR);
 
 		callback(null, Exporter.config());
 	};
@@ -106,19 +116,20 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 			+ '\n' + prefix + 'members.member_name as _username, '
 			+ '\n' + prefix + 'members.email_address as _email, '
 			+ '\n' + prefix + 'members.real_name as _alternativeUsername, '
-			+ '\n' + prefix + 'members.email_address as _registrationEmail, '
 			+ '\n' + prefix + 'members.signature as _signature, '
 			+ '\n' + '(' + prefix + 'members.last_login * 1000) as _lastonline, '
 			+ '\n' + '(' + prefix + 'members.date_registered * 1000) as _joindate , '
 			+ '\n' + prefix + 'members.location as _location, '
 			+ '\n' + prefix + 'members.birthdate as _birthday, '
 			+ '\n' + prefix + 'members.website_url as _website, '
+			+ '\n CONCAT("/assets/uploads/_imported_profiles/avatars/", ' + prefix + 'attachments.filename) AS _picture, '
 			+ '\n CONCAT(' + prefix + 'members.id_group, \',\', ' + prefix + 'members.additional_groups) AS _groups, '
 			+ '\n' + prefix + 'membergroups.group_name as _level, '
 			+ '\n (' + prefix + 'ban_groups.cannot_access + ' + prefix + 'ban_groups.cannot_register + ' + prefix + 'ban_groups.cannot_post + ' + prefix + 'ban_groups.cannot_login) > 0 as _banned '
 			+ '\n' + 'FROM ' + prefix + 'members '
 			+ '\n' + 'LEFT JOIN ' + prefix + 'membergroups ON ' + prefix + 'membergroups.id_group = ' + prefix + 'members.id_group '
 			+ '\n' + 'LEFT JOIN ' + prefix + 'ban_groups ON ' + prefix + 'ban_groups.name = ' + prefix + 'members.member_name '
+			+ '\n' + 'LEFT JOIN ' + prefix + 'attachments ON ' + prefix + 'attachments.id_member = ' + prefix + 'members.id_member '
 			+ '\n' + 'WHERE ' + prefix + 'members.id_member = ' + prefix + 'members.id_member '
 			+ '\n' + 'ORDER BY ' + prefix + 'members.id_member '
 			+ '\n' + (start >= 0 && limit >= 0 ? ' LIMIT ' + start + ',' + limit : '');
@@ -243,6 +254,25 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 	};
 
 
+	// this whole thing is crap
+	var copyAttachmentAndGetNewUrl = Exporter.copyDATAttachmentAndGetNewUrl = function (_aid, filename) {
+
+		var baseUrl = '/uploads/_imported_attachments';
+		var newFileUrlPath = '/' + MIGRATED_FOLDER + '/' + _aid + '_' + encodeURIComponent(filename);
+
+		var originalFile = path.join(ATTACHMENTS_ORIGINALS_DIR, '/' + _aid);
+
+		var newFilename = _aid + '_' + filename;
+		var newFileFullFSPath = path.join(ATTACHMENTS_MIGRATED_DIR, newFilename);
+
+		// TODO: wtf is that? sync copy? meh
+		if (!fs.existsSync(newFileFullFSPath) && fs.existsSync(originalFile)) {
+			fs.copySync(originalFile, newFileFullFSPath);
+		}
+		return baseUrl + newFileUrlPath;
+	};
+
+
 	var getAttachmentsMap = function (callback) {
 		callback = !_.isFunction(callback) ? noop : callback;
 		var prefix = Exporter.config('prefix');
@@ -251,16 +281,18 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 			return callback(null, Exporter['_attachmentsMap_']);
 		}
 		var query = 'SELECT '
-			+ prefix + 'attachments.id_attach as _aid, '
-			+ prefix + 'attachments.id_msg as _pid, '
-			+ prefix + 'attachments.id_member as _uid, '
-			+ prefix + 'attachments.attachment_type as _type, '
-			+ prefix + 'attachments.filename as _filename, '
-			+ prefix + 'attachments.id_folder as _folderid, '
-			+ prefix + 'attachments.downloads as _downloads, '
-			+ prefix + 'attachments.width as _width, '
-			+ prefix + 'attachments.height as _height '
-			+ 'FROM ' + prefix + 'attachments ';
+			+ '\n' +  prefix + 'attachments.id_attach as _aid, '
+			+ '\n' +  prefix + 'attachments.id_msg as _pid, '
+			+ '\n' +  prefix + 'attachments.id_member as _uid, '
+			+ '\n' +  prefix + 'attachments.attachment_type as _type, '
+			+ '\n' +  prefix + 'attachments.filename as _filename, '
+			+ '\n' +  prefix + 'attachments.id_folder as _folderid, '
+			+ '\n' +  prefix + 'attachments.downloads as _downloads, '
+			+ '\n' +  prefix + 'attachments.width as _width, '
+			+ '\n' +  prefix + 'attachments.height as _height '
+			+ '\n' +  'FROM ' + prefix + 'attachments '
+			+ '\n' + 'WHERE (' + prefix + 'attachments.id_thumb > 0 OR ' + prefix + 'attachments.width = 0) '
+			+ '\n' +  'AND ' + prefix + 'attachments.id_member = 0 ' ;
 
 		Exporter.connection.query(query,
 			function(err, rows) {
@@ -271,8 +303,9 @@ var logPrefix = '[nodebb-plugin-import-smf]';
 				var map = {};
 				rows.forEach(function(row) {
 					map[row._pid] = map[row._pid] || [];
+					row._filename = sanitize(row._filename);
 					map[row._pid].push({
-						url: '/public/_imported_attachments_/' + row._folderid + '/' + row._filename,
+						url: copyAttachmentAndGetNewUrl(row._aid, row._filename),
 						filename: row._filename,
 						isImage: !!row._width
 					});
