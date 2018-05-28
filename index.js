@@ -183,7 +183,6 @@ var ATTACHMENTS_MIGRATED_DIR = path.join(__dirname, '/tmp/attachments/' + MIGRAT
 			+ '\n' +  prefix + 'boards.id_parent as _parentCid, '
 			+ '\n' +  prefix + 'boards.name as _name, '
 			+ '\n' +  prefix + 'boards.description as _description, '
-			+ '\n (' +  prefix + 'boards.lastUpdated * 1000) as _timestamp, '
 			+ '\n' +  prefix + 'boards.board_order as _order '
 			+ '\n' +  'FROM ' + prefix + 'boards '
 			+ '\n' + (start >= 0 && limit >= 0 ? ' LIMIT ' + start + ',' + limit : '');
@@ -285,7 +284,7 @@ var ATTACHMENTS_MIGRATED_DIR = path.join(__dirname, '/tmp/attachments/' + MIGRAT
 			+ '\n' +  prefix + 'attachments.id_msg as _pid, '
 			+ '\n' +  prefix + 'attachments.id_member as _uid, '
 			+ '\n' +  prefix + 'attachments.attachment_type as _type, '
-			+ '\n' +  prefix + 'attachments.filename as _filename, '
+			+ '\n' +  prefix + 'attachments.filename as _filen, '
 			+ '\n' +  prefix + 'attachments.id_folder as _folderid, '
 			+ '\n' +  prefix + 'attachments.downloads as _downloads, '
 			+ '\n' +  prefix + 'attachments.width as _width, '
@@ -303,10 +302,12 @@ var ATTACHMENTS_MIGRATED_DIR = path.join(__dirname, '/tmp/attachments/' + MIGRAT
 				var map = {};
 				rows.forEach(function(row) {
 					map[row._pid] = map[row._pid] || [];
-					row._filename = sanitize(row._filename);
+					row._filen = sanitize(row._filen);
+					// alias
+					row._filenname = row._filen;
 					map[row._pid].push({
-						url: copyAttachmentAndGetNewUrl(row._aid, row._filename),
-						filename: row._filename,
+						url: copyAttachmentAndGetNewUrl(row._aid, row._filen),
+						filename: row._filen,
 						isImage: !!row._width
 					});
 				});
